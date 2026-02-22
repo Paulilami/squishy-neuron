@@ -86,37 +86,6 @@ Ratio                              1.33x
 
 The difference is entirely in the FFN replacement. Attention, embeddings, and norms are byte-for-byte identical.
 
-## Project Structure
-
-```
-config.py                    Single dataclass, every hyperparameter, JSON save/load
-src/
-    tokenizer.py             HuggingFace tokenizers BPE (Rust backend, not Transformers)
-    neuron.py                SelectiveNeuronBank + StatefulNeuronBank + GatedNeuronBank + registry
-    attention.py             CausalSelfAttention with RoPE + fused QKV + SDPA
-    model.py                 SquishyTransformer + BaselineTransformer + build_model()
-    trainer.py               Training loop: AMP, grad accum, cosine LR, wandb, safetensors
-    analysis.py              Decay/state_weight histograms, selectivity heatmaps, A/B comparison
-scripts/
-    prepare_data.py          Download TinyStories + train tokenizer + tokenize to .npy
-    train.py                 CLI training entry (flags: --baseline, --variant, --resume)
-    generate.py              Interactive text generation with top-k/top-p sampling
-    compare.py               Train squishy and baseline sequentially, same seed, report results
-    quick_test.py            Synthetic data end-to-end: train both models in minutes on CPU
-tests/
-    test_neuron.py           All neuron variants, parallel scan correctness, registry, batch independence
-    test_attention.py        Causal masking, RoPE equivariance, shapes, gradients, variable seq lengths
-    test_model.py            Full model forward/backward, RMSNorm, gradient checkpointing, API parity
-```
-
-Dependency flow (no circular imports):
-
-```
-config.py -> src/tokenizer.py
-config.py -> src/neuron.py    \
-config.py -> src/attention.py  -> src/model.py -> src/trainer.py -> src/analysis.py
-```
-
 ## Variant Swapping
 
 The neuron design is the research variable. Swapping it requires exactly 3 things:
